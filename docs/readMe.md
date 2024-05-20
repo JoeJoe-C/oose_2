@@ -152,3 +152,109 @@ NOTE: Assessment mark is still capped at 100%
 # Criteria
 
 ## UML design
+
+```mermaid
+---
+title: Events Possibility
+---
+
+classDiagram
+    class EventsManager {
+    }
+
+    class Event {
+        <<interface>>
+        + void doAction()
+    }
+
+    class DeliveryEvent {
+
+    }
+
+    class PurchaseEvent{
+
+    }
+    
+    class PickupEvent {
+
+    }
+
+    class DropOffEvent {
+    }
+
+    class PurchaseOnlineEvent {
+    }
+
+Event <|-- DeliveryEvent
+Event <|-- PurchaseEvent
+Event <|-- PickupEvent
+Event <|-- DropOffEvent
+Event <|-- PurchaseOnlineEvent
+```
+
+```mermaid
+---
+title: Bike Shop Model
+---
+classDiagram
+    class Subject {
+    }
+
+    class Observer {
+        <<interface>>
+    }
+    class BikeShop {
+        int day
+        int bikeLimit
+        int bank
+        int numEmployees
+        Bike bikes
+    }
+    class Bike {
+        - BikeState state
+        - String email
+        +void setState(State)
+        +void getState(State)
+        +void purchase(BikeShop)
+        +void pickup(BikeShop)
+    }
+
+    class BikeState {
+        <<interface>>
+        +void service(Bike, BikeShop)
+        +void purchase(Bike, BikeShop)
+        +void purchaseOnline(Bike, BikeShop)
+        +void pickup(Bike, BikeShop)
+    }
+    
+    class AwaitingPickupState {
+        +void service(Bike, BikeShop)
+        +void purchase(Bike, BikeShop)
+        +void purchaseOnline(Bike, BikeShop)
+        +void pickup(Bike, BikeShop)
+    }
+    
+    class ServicingState {
+        -int dayDropped
+        +void service(Bike, BikeShop)
+        +void purchase(Bike, BikeShop)
+        +void purchaseOnline(Bike, BikeShop)
+        +void pickup(Bike, BikeShop)
+    }
+    
+    class AvailableState {
+        +void service(Bike, BikeShop)
+        +void purchase(Bike, BikeShop)
+        +void purchaseOnline(Bike, BikeShop)
+        +void pickup(Bike, BikeShop)
+    }
+
+BikeShop o--> "0..*" Bike
+Bike o--> BikeState
+BikeState --> BikeShop
+BikeState <|-- AwaitingPickupState
+BikeState <|-- ServicingState
+BikeState <|-- AvailableState
+
+```
+
