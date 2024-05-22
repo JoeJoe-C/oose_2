@@ -1,4 +1,5 @@
 # OOSE Assignment2: Bicycle Shop Simulator
+PurchasedState
 
 By: Yoseph Campbell
 Student Id: 21552155
@@ -153,6 +154,188 @@ NOTE: Assessment mark is still capped at 100%
 
 ## UML design
 
+### Class Descriptions and requirements
+
+#### BikeShop
+
+BikeShop begins with:
+
+- bank =15000
+- 50 bikes all available for purchase
+- hold a maximum of 100 bikes in total
+
+---
+
+- Bikeshop handles services related to Bikeshop function
+    - Delivery
+        - Accepts 10 bikes available for purchase
+            1. if it has space for the bikes
+            2. has at least 10000 in bank
+            3. 5000 is deducted from the bank
+        - Reject otherwise
+    - Drop off (servicing)
+        - Accepts 1 bike to service (not available for purchase)
+            1. if it has space for 1 bike
+            2. no cash is exchanged
+            3. servicing the bike takes 2 days
+            4. holds the bike to await for pickup
+    - Pickup
+        - Pickup bike either being serviced or purchased online
+            1. if the bike email associated with service bike 
+                1. check if it is awaiting pickup
+                2. if it is not available for pickup then nothing happens
+                3. If it is available for pikcup remove bike from shop
+                4. Add 100 to bank
+            2. If the bike email associated with an online purchase
+                1. remove the bike
+    - Purchase in store
+        - Purchases 1 bike
+            - that is available for purchase
+            - remove the bike from inventory
+            - add 1000 to bikeshop bank
+        - If no available bikes for purchase nothing happens
+    - Purchase Online
+        - Purchases 1 bike
+            - that is available for purchase
+            - set the bike state to awaiting pickup
+            - add 1000 to bikeshop bank
+        - if no available bikes for purchase nothing happens
+
+```mermaid
+---
+title: BikeShop Logic
+---
+
+classDiagram
+    
+    class BikeShopActions {
+        +int sell()
+        +int buy(Bike[])
+        +void receiveBike(Bike) 
+        + 
+    }
+```
+
+### BikeManager & Bikes
+
+- Each bike can have a possible set of states:
+    - Available for purchase
+    - Currently servicing
+    - Finished servicing
+    - Awaiting pickup
+
+- A bike that is being serviced cost 100
+- A bike that is fresh and available to be picked up is 1000
+
+```mermaid
+---
+title: Bike States
+---
+stateDiagram
+    Purchaseable
+    NonPurchaseable
+    Purchased
+    Servicing
+    AwaitingPickup
+    
+    
+    [*] --> Purchaseable
+    [*] --> NonPurchaseable
+    Purchaseable --> Purchased : purchase()
+    Purchaseable --> Servicing : service() [if email provided] / repair()
+    NonPurchaseable --> Servicing : service() [if email provided] / repair()
+    Purchased --> AwaitingPickup : hold()
+    Purchaseable --> AwaitingPickup : purchaseOnline() [if email provided] /hold()
+    Servicing --> AwaitingPickup : if bike.daysElapsed == 2 / hold()
+```
+---
+
+#### BikeManager and Bike class
+
+```mermaid
+---
+title: Bike Manager Logic
+---
+
+classDiagram
+direction LR
+    class BikeManager {
+        -int bikeLimit
+        -Bike[] availableBikes
+        -Bike[] servicingBikes
+        -Bike[] awaitingPickup
+        +int getLimit()
+        +void setLimit(int)
+    }
+
+    class BikeInventory {
+        <<interface>>
+        +add(Bike, BikeState)
+        +remove(Bike, BikeState)
+        +find(Bike, BikeState)
+        +service(Bike[])
+    } 
+    class Bike {
+        -int price
+        -BikeState state
+        +State getState()
+        +void setState(BikeState)
+        +int getPrice()
+        +void setPrice()
+        +Bike purchase()
+        +Bike purchaseOnline()
+        +void service()
+        +String getEmail()
+        +void setEmail(String)
+    }
+
+    class BikeState {
+        <<interface>>
+        +Bike purchase()
+        +Bike purchaseOnline()
+        +void service()
+        +Bike pickUp()
+        +String getEmail()
+        +void setEmail(String)
+        -hold()
+        -repair()
+    }
+
+    class PurchaseableState {
+        -Bike bike
+    }
+
+    class PurchasedState {
+        -Bike bike
+    }
+
+    class ServicingState {
+        -Bike bike
+        -String email
+    }
+
+    class AwaitingPickupState {
+        -Bike bike
+        -String email
+    }
+    
+    class NonPurchaseableState {
+        -Bike bike
+        -String email
+    }
+
+Bike *--> BikeState
+BikeManager o--> Bike
+BikeState <|-- PurchaseableState
+BikeState <|-- PurchasedState
+BikeState <|-- ServicingState
+BikeState <|-- AwaitingPickupState
+BikeState <|-- NonPurchaseableState
+BikeManager --|> BikeInventory
+BikeInventory ..> BikeState
+BikeInventory ..> Bike
+```
+
 ```mermaid
 ---
 title: Events Possibility
@@ -197,18 +380,86 @@ Event <|-- PurchaseOnlineEvent
 title: Bike Shop Model
 ---
 classDiagram
-    class Subject {
+    class EventManager {
+        
+    }
+    class Event {
+        <<interface>>
+        -BikeShop context
+        +doAction(BikeShop, Event)
     }
 
-    class Observer {
+    class FileWriter {
         <<interface>>
+        -String fileName
+        -appendToFile(String)
+        +writeToFile(String)
+    
     }
+    
+    class ConsoleWriter {
+        <<interface>>
+        +writeToConsole(String)
+    }
+    
+    class FailureWriter {
+        <<interface>>
+        +writeFailures(String)
+    }
+
+    class DeliveryEvent {
+        -BikeShop context
+        +doAction(BikeShop)
+        -display(BikeShop)
+    }
+
+    class DropOffEvent {
+        -String email
+        -BikeShop context
+        +doAction(BikeShop)
+        -display(BikeShop)
+    }
+    
+    class PurchaseEvent {
+        -BikeShop context
+        +doAction()
+        -display(BikeShop)
+    }
+
+    class PurchaseOnlineEvent {
+        -String email
+        -BikeShop context
+        +doAction()
+        -display(BikeShop)
+    }
+    
+    class PickupEvent {
+        -String email
+        -BikeShop context
+    }
+
+Event <|-- PurchaseEvent
+Event <|-- DeliveryEvent
+Event <|-- DropOffEvent
+Event <|-- PurchaseOnlineEvent
+Event <|-- PickupEvent
+
     class BikeShop {
         int day
-        int bikeLimit
         int bank
         int numEmployees
-        Bike bikes
+        BikeManager bikeMgr
+    }
+
+    class BikeManager {
+        -int bikeLimit
+        -Bike[] available
+        -Bike[] servicing
+        -Bike[] awaitingPickup
+        -int getTotalBikes()
+        -Bike findBike(String)
+        -Bike addBike(Bike)
+        -
     }
     class Bike {
         - BikeState state
@@ -235,11 +486,15 @@ classDiagram
     }
     
     class ServicingState {
-        -int dayDropped
+        -int dayElapsed
         +void service(Bike, BikeShop)
         +void purchase(Bike, BikeShop)
         +void purchaseOnline(Bike, BikeShop)
         +void pickup(Bike, BikeShop)
+    }
+
+    class ServicedState {
+        +void service(Bike, BikeShop)
     }
     
     class AvailableState {
