@@ -208,11 +208,12 @@ title: BikeShop Logic
 
 classDiagram
     
-    class BikeShopActions {
-        +int sell()
-        +int buy(Bike[])
-        +void receiveBike(Bike) 
-        + 
+    class BikeShop {
+        -int day
+        -int bank
+        -int numEmployees
+        -BikeManager bikeMgr
+        
     }
 ```
 
@@ -266,14 +267,16 @@ direction LR
         -Bike[] awaitingPickup
         +int getLimit()
         +void setLimit(int)
+        +int getTotalBikes()
     }
 
     class BikeInventory {
         <<interface>>
-        +add(Bike, BikeState)
-        +remove(Bike, BikeState)
-        +find(Bike, BikeState)
-        +service(Bike[])
+        +void add(Bike, BikeState)
+        +Bike remove(Bike, BikeState)
+        +Bike find(Bike, BikeState)
+        +void dropOff(Bike[])
+        +void service(Bike[])
     } 
     class Bike {
         -int price
